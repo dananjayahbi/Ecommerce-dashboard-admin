@@ -201,18 +201,19 @@ export default function TeamPage() {
           className="my-12"
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {teamMembers.map(member => (
             <Card 
               key={member.id}
               hoverable
-              className="w-full"
+              className="w-full overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-200"
               cover={
-                <div className="flex justify-center p-4 bg-gray-50">
+                <div className="relative flex justify-center p-6 bg-gradient-to-r from-blue-500 to-purple-600">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-80"></div>
                   <img
                     alt={member.name}
                     src={member.avatar || `https://randomuser.me/api/portraits/men/1.jpg`}
-                    className="w-24 h-24 rounded-full object-cover"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md z-10"
                   />
                 </div>
               }
@@ -220,28 +221,47 @@ export default function TeamPage() {
                 [
                   // Show edit button only if user has permission
                   canEditMember(member) && (
-                    <Tooltip key="edit" title="Edit">
+                    <Tooltip key="edit" title="Edit Member">
                       <EditOutlined onClick={() => handleEdit(member.id!.toString())} />
                     </Tooltip>
                   ),
                   // Show delete button only if user has permission
                   canDeleteMember(member) && (
-                    <Tooltip key="delete" title="Delete">
+                    <Tooltip key="delete" title="Delete Member">
                       <DeleteOutlined onClick={() => showDeleteModal(member.id!.toString())} className="text-red-500" />
                     </Tooltip>
                   )
                 ].filter(Boolean) // Filter out undefined/false values
               }
             >
-              <Card.Meta
-                title={member.name}
-                description={
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">{member.role}</p>
-                    <p className="text-sm text-gray-500">{member.email}</p>
-                  </div>
-                }
-              />
+              <div className="px-2 py-4 text-center">
+                <h3 className="text-lg font-semibold mb-1">{member.name}</h3>
+                
+                <div className="mb-2">
+                  {member.role === 'Super-Admin' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Super Admin
+                    </span>
+                  )}
+                  {member.role === 'Admin' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Admin
+                    </span>
+                  )}
+                  {member.role === 'Member' && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      Member
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-sm text-gray-500 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  {member.email}
+                </p>
+              </div>
             </Card>
           ))}
         </div>

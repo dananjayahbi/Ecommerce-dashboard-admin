@@ -33,11 +33,19 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Handle both old (isAdmin) and new (role) database formats
+        let userRole = 'Member';
+        if ('role' in user) {
+          userRole = user.role;
+        } else if ('isAdmin' in user && user.isAdmin === true) {
+          userRole = 'Super-Admin';
+        }
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: userRole
         };
       }
     })

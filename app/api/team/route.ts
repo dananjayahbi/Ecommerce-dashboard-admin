@@ -88,10 +88,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Nobody can create Super-Admin users except another Super-Admin
-    if (role === 'Super-Admin' && session.user.role !== 'Super-Admin') {
+    // Nobody can create Super-Admin users - there should only be one
+    if (role === 'Super-Admin') {
       return NextResponse.json(
-        { error: 'Only Super-Admin can create Super-Admin users' },
+        { error: 'Cannot create additional Super-Admin users' },
         { status: 403 }
       );
     }
@@ -190,10 +190,10 @@ export async function PATCH(req: NextRequest) {
     
     // Role update permissions
     if (role) {
-      // Only Super-Admin can assign Super-Admin role
-      if (role === 'Super-Admin' && session.user.role !== 'Super-Admin') {
+      // Cannot change role to Super-Admin
+      if (role === 'Super-Admin' && userToUpdate.role !== 'Super-Admin') {
         return NextResponse.json(
-          { error: 'Only Super-Admin can assign Super-Admin role' },
+          { error: 'Cannot change users to Super-Admin role' },
           { status: 403 }
         );
       }

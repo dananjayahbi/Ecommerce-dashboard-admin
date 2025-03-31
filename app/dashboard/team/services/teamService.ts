@@ -15,7 +15,7 @@ export const apiToUiTeamMember = (apiMember: ApiTeamMember): TeamMember => ({
   id: apiMember.id,
   name: apiMember.name,
   email: apiMember.email,
-  role: apiMember.role, // Use the role directly
+  role: apiMember.role || 'Member', // Ensure role is always set, default to Member
   avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`, // Generate random avatar if none is provided
 });
 

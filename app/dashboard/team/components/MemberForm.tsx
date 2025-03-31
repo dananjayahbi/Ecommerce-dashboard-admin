@@ -56,6 +56,9 @@ const MemberForm: React.FC<MemberFormProps> = ({
   const isEditingAdminOrSuperAdmin = isEditMode && 
                                     (initialValues?.role === 'Admin' || initialValues?.role === 'Super-Admin');
   
+  // Check if we're editing a Super-Admin
+  const isEditingSuperAdmin = isEditMode && initialValues?.role === 'Super-Admin';
+  
   // Only Super-Admin can modify Admin or Super-Admin users
   const canEditThisUser = currentUserRole === 'Super-Admin' || 
                          (currentUserRole === 'Admin' && initialValues?.role !== 'Admin' && initialValues?.role !== 'Super-Admin');
@@ -104,9 +107,10 @@ const MemberForm: React.FC<MemberFormProps> = ({
       >
         <Select 
           placeholder="Select a role"
-          disabled={isEditingAdminOrSuperAdmin && currentUserRole !== 'Super-Admin'}
+          disabled={isEditingAdminOrSuperAdmin && currentUserRole !== 'Super-Admin' || isEditingSuperAdmin}
         >
-          {currentUserRole === 'Super-Admin' && 
+          {/* Only show Super-Admin option if editing an existing Super-Admin */}
+          {isEditingSuperAdmin && 
             <Option value="Super-Admin">Super-Admin</Option>
           }
           {canAssignAdmin && 
