@@ -27,16 +27,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Count total users to determine if this is the first user
+    const userCount = await prisma.user.count();
+    
     // Hash the password
     const hashedPassword = await hashPassword(password);
 
-    // Create the user
+    // Create the user - first user becomes Super-Admin
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        isAdmin: true, // For now set all registered users as admin
+        role: userCount === 0 ? 'Super-Admin' : 'Member', // First user is Super-Admin
       },
     });
 

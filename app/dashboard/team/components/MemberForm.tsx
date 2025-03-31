@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Form, Input, Select, Button } from 'antd';
+import { useSession } from 'next-auth/react';
 
 const { Option } = Select;
 
@@ -27,28 +28,50 @@ const MemberForm: React.FC<MemberFormProps> = ({
   isLoading = false,
 }) => {
   const [form] = Form.useForm();
+  const { data: session } = useSession();
   const isEditMode = !!initialValues?.id;
+  const currentUserRole = session?.user?.role || 'Member';
 
-  const handleSubmit = (values: TeamMember & { password?: string }) => {
-    // If editing, include the id
-    if (isEditMode) {
-      onSubmit({ ...values, id: initialValues!.id });
+  // Initialize form with default values or existing member data
+  React.useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
     } else {
-      onSubmit(values);
+      form.resetFields();
     }
+  }, [initialValues, form]);
+
+  const handleSubmit = (values: any) => {
+    onSubmit({
+      id: initialValues?.id,
+      ...values,
+    });
   };
+
+  // Determine which roles can be selected based on current user's role
+  const canAssignAdmin = currentUserRole === 'Super-Admin' || 
+                         (currentUserRole === 'Admin' && !isEditMode);
+  
+  // Check if editing an Admin or Super-Admin
+  const isEditingAdminOrSuperAdmin = isEditMode && 
+                                    (initialValues?.role === 'Admin' || initialValues?.role === 'Super-Admin');
+  
+  // Only Super-Admin can modify Admin or Super-Admin users
+  const canEditThisUser = currentUserRole === 'Super-Admin' || 
+                         (currentUserRole === 'Admin' && initialValues?.role !== 'Admin' && initialValues?.role !== 'Super-Admin');
 
   return (
     <Form
       form={form}
       layout="vertical"
-      initialValues={initialValues || {}}
       onFinish={handleSubmit}
+      initialValues={initialValues || { role: 'Member' }}
+      disabled={isLoading || !canEditThisUser}
     >
       <Form.Item
         name="name"
         label="Name"
-        rules={[{ required: true, message: 'Please enter the name' }]}
+        rules={[{ required: true, message: 'Please enter a name' }]}
       >
         <Input placeholder="Enter full name" />
       </Form.Item>
@@ -57,45 +80,39 @@ const MemberForm: React.FC<MemberFormProps> = ({
         name="email"
         label="Email"
         rules={[
-          { required: true, message: 'Please enter the email' },
+          { required: true, message: 'Please enter an email' },
           { type: 'email', message: 'Please enter a valid email' }
         ]}
       >
         <Input placeholder="Enter email address" />
       </Form.Item>
 
-      {/* Password field (only required for new members) */}
-      <Form.Item
-        name="password"
-        label="Password"
-        rules={[
-          { 
-            required: !isEditMode, 
-            message: 'Please enter a password' 
-          },
-          { 
-            min: 6, 
-            message: 'Password must be at least 6 characters' 
-          }
-        ]}
-      >
-        <Input.Password 
-          placeholder={isEditMode ? "Enter new password (leave empty to keep current)" : "Enter password"} 
-        />
-      </Form.Item>
+      {!isEditMode && (
+        <Form.Item
+          name="password"
+          label="Password"
+          rules={[{ required: true, message: 'Please enter a password' }]}
+        >
+          <Input.Password placeholder="Enter password" />
+        </Form.Item>
+      )}
 
       <Form.Item
         name="role"
         label="Role"
         rules={[{ required: true, message: 'Please select a role' }]}
       >
-        <Select placeholder="Select a role">
-          <Option value="Admin">Admin</Option>
+        <Select 
+          placeholder="Select a role"
+          disabled={isEditingAdminOrSuperAdmin && currentUserRole !== 'Super-Admin'}
+        >
+          {currentUserRole === 'Super-Admin' && 
+            <Option value="Super-Admin">Super-Admin</Option>
+          }
+          {canAssignAdmin && 
+            <Option value="Admin">Admin</Option>
+          }
           <Option value="Member">Member</Option>
-          <Option value="Developer">Developer</Option>
-          <Option value="Designer">Designer</Option>
-          <Option value="Marketing">Marketing</Option>
-          <Option value="Support">Support</Option>
         </Select>
       </Form.Item>
 
@@ -109,7 +126,7 @@ const MemberForm: React.FC<MemberFormProps> = ({
 
       <Form.Item className="flex justify-end space-x-2">
         <Button onClick={onCancel}>Cancel</Button>
-        <Button type="primary" htmlType="submit" loading={isLoading}>
+        <Button type="primary" htmlType="submit" loading={isLoading} disabled={!canEditThisUser}>
           {isEditMode ? 'Update Member' : 'Add Member'}
         </Button>
       </Form.Item>

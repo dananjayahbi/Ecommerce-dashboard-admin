@@ -5,7 +5,7 @@ export interface ApiTeamMember {
   id: string;
   name: string;
   email: string;
-  isAdmin: boolean;
+  role: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,7 +15,7 @@ export const apiToUiTeamMember = (apiMember: ApiTeamMember): TeamMember => ({
   id: apiMember.id,
   name: apiMember.name,
   email: apiMember.email,
-  role: apiMember.isAdmin ? 'Admin' : 'Member', // Map boolean to role string
+  role: apiMember.role, // Use the role directly
   avatar: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`, // Generate random avatar if none is provided
 });
 
@@ -23,7 +23,7 @@ export const apiToUiTeamMember = (apiMember: ApiTeamMember): TeamMember => ({
 export const uiToApiTeamMember = (uiMember: TeamMember) => ({
   name: uiMember.name,
   email: uiMember.email,
-  isAdmin: uiMember.role === 'Admin', // Convert role string to boolean
+  role: uiMember.role, // Use the role directly
 });
 
 // Fetch all team members
@@ -98,7 +98,7 @@ export const updateTeamMember = async (id: string, member: Partial<TeamMember> &
     
     if (member.name) updateData.name = member.name;
     if (member.email) updateData.email = member.email;
-    if (member.role) updateData.isAdmin = member.role === 'Admin';
+    if (member.role) updateData.role = member.role;
     if (member.password) updateData.password = member.password;
     
     const response = await fetch(`/api/team/${id}`, {

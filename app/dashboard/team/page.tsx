@@ -10,6 +10,7 @@ import {
   updateTeamMember, 
   deleteTeamMember 
 } from './services/teamService';
+import { useSession } from 'next-auth/react';
 
 export default function TeamPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -21,6 +22,8 @@ export default function TeamPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const userRole = session?.user?.role || 'Member';
 
   // Load team members on component mount
   useEffect(() => {
@@ -42,33 +45,59 @@ export default function TeamPage() {
     }
   };
 
+  const canEditMember = (member: TeamMember) => {
+    // Super-Admin can edit anyone
+    if (userRole === 'Super-Admin') return true;
+    
+    // Admin can only edit Members, not other Admins or Super-Admins
+    if (userRole === 'Admin') {
+      return member.role !== 'Admin' && member.role !== 'Super-Admin';
+    }
+    
+    // Members can't edit anyone
+    return false;
+  };
+
+  const canDeleteMember = (member: TeamMember) => {
+    // The same logic as editing applies for deletion
+    return canEditMember(member);
+  };
+
   const handleEdit = (id: string) => {
     const memberToEdit = teamMembers.find(member => member.id === id);
-    if (memberToEdit) {
+    if (memberToEdit && canEditMember(memberToEdit)) {
       setCurrentMember(memberToEdit);
       setEditModalVisible(true);
     }
   };
 
   const showDeleteModal = (id: string) => {
-    setMemberToDelete(id);
-    setDeleteModalVisible(true);
+    const memberToDelete = teamMembers.find(member => member.id === id);
+    if (memberToDelete && canDeleteMember(memberToDelete)) {
+      setMemberToDelete(id);
+      setDeleteModalVisible(true);
+    }
   };
 
   const handleDelete = async () => {
-    if (memberToDelete) {
-      try {
-        setIsLoading(true);
-        await deleteTeamMember(memberToDelete);
-        setTeamMembers(prev => prev.filter(member => member.id !== memberToDelete));
-        message.success('Team member deleted successfully');
-      } catch (err: any) {
-        console.error('Error deleting team member:', err);
-        message.error(err.message || 'Failed to delete team member');
-      } finally {
-        setIsLoading(false);
-        setDeleteModalVisible(false);
-      }
+    if (!memberToDelete) return;
+    
+    try {
+      setIsLoading(true);
+      await deleteTeamMember(memberToDelete);
+      
+      setTeamMembers(prev => 
+        prev.filter(member => member.id !== memberToDelete)
+      );
+      
+      message.success('Team member deleted successfully');
+      setDeleteModalVisible(false);
+      setMemberToDelete(null);
+    } catch (err: any) {
+      console.error('Error deleting team member:', err);
+      message.error(err.message || 'Failed to delete team member');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,19 +106,12 @@ export default function TeamPage() {
   };
 
   const handleAddSubmit = async (values: TeamMember & { password?: string }) => {
-    if (!values.password) {
-      message.error('Password is required when adding a new team member');
-      return;
-    }
-    
     try {
       setIsLoading(true);
-      const newMember = await createTeamMember({
-        ...values,
-        password: values.password
-      });
+      const newMember = await createTeamMember(values);
       
-      setTeamMembers(prev => [...prev, newMember]);
+      setTeamMembers(prev => [newMember, ...prev]);
+      
       message.success('Team member added successfully');
       setAddModalVisible(false);
     } catch (err: any) {
@@ -154,18 +176,23 @@ export default function TeamPage() {
     );
   }
 
+  // Check if user can add new members (only Super-Admin and Admin)
+  const canAddMembers = userRole === 'Super-Admin' || userRole === 'Admin';
+
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <Flex justify="space-between" align="center" className="mb-6">
         <h1 className="text-2xl font-bold">Team Management</h1>
-        <Button 
-          type="primary" 
-          icon={<UserAddOutlined />} 
-          onClick={handleAddMember}
-          className="bg-blue-600"
-        >
-          Add New Member
-        </Button>
+        {canAddMembers && (
+          <Button 
+            type="primary" 
+            icon={<UserAddOutlined />} 
+            onClick={handleAddMember}
+            className="bg-blue-600"
+          >
+            Add New Member
+          </Button>
+        )}
       </Flex>
       
       {teamMembers.length === 0 ? (
@@ -189,14 +216,22 @@ export default function TeamPage() {
                   />
                 </div>
               }
-              actions={[
-                <Tooltip key="edit" title="Edit">
-                  <EditOutlined onClick={() => handleEdit(member.id!.toString())} />
-                </Tooltip>,
-                <Tooltip key="delete" title="Delete">
-                  <DeleteOutlined onClick={() => showDeleteModal(member.id!.toString())} className="text-red-500" />
-                </Tooltip>
-              ]}
+              actions={
+                [
+                  // Show edit button only if user has permission
+                  canEditMember(member) && (
+                    <Tooltip key="edit" title="Edit">
+                      <EditOutlined onClick={() => handleEdit(member.id!.toString())} />
+                    </Tooltip>
+                  ),
+                  // Show delete button only if user has permission
+                  canDeleteMember(member) && (
+                    <Tooltip key="delete" title="Delete">
+                      <DeleteOutlined onClick={() => showDeleteModal(member.id!.toString())} className="text-red-500" />
+                    </Tooltip>
+                  )
+                ].filter(Boolean) // Filter out undefined/false values
+              }
             >
               <Card.Meta
                 title={member.name}

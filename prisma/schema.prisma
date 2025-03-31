@@ -18,7 +18,7 @@ model User {
   name      String
   email     String   @unique
   password  String
-  isAdmin   Boolean  @default(false)
+  role      String   @default("Member") // Values: "Super-Admin", "Admin", "Member"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
