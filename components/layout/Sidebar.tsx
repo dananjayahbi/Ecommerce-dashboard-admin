@@ -11,14 +11,9 @@ import {
   Settings,
   LogOut,
   Menu as MenuIcon,
-  Calendar,
   Inbox,
-  Heart,
   FileText,
-  CheckSquare,
   MessageSquare,
-  Table,
-  Layout as LayoutIcon,
   CreditCard,
   User2
 } from 'lucide-react';
@@ -92,14 +87,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                 </Link>
               </div>
               <div className="flex justify-center py-2.5">
-                <Link href="/dashboard/favorites">
-                  <Heart 
-                    size={18} 
-                    className={pathname === '/dashboard/favorites' ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'} 
-                  />
-                </Link>
-              </div>
-              <div className="flex justify-center py-2.5">
                 <Link href="/dashboard/inbox">
                   <Inbox 
                     size={18} 
@@ -139,12 +126,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                 isActive={pathname === '/dashboard/products'}
               />
               <NavItem
-                icon={<Heart size={18} />}
-                label="Favorites"
-                href="/dashboard/favorites"
-                isActive={pathname === '/dashboard/favorites'}
-              />
-              <NavItem
                 icon={<Inbox size={18} />}
                 label="Inbox"
                 href="/dashboard/inbox"
@@ -178,22 +159,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
           {collapsed ? (
             <>
               <div className="flex justify-center py-2.5">
-                <Link href="/dashboard/calendar">
-                  <Calendar 
-                    size={18} 
-                    className={pathname === '/dashboard/calendar' ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'} 
-                  />
-                </Link>
-              </div>
-              <div className="flex justify-center py-2.5">
-                <Link href="/dashboard/todo">
-                  <CheckSquare 
-                    size={18} 
-                    className={pathname === '/dashboard/todo' ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'} 
-                  />
-                </Link>
-              </div>
-              <div className="flex justify-center py-2.5">
                 <Link href="/dashboard/contact">
                   <MessageSquare 
                     size={18} 
@@ -210,22 +175,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                 </Link>
               </div>
               <div className="flex justify-center py-2.5">
-                <Link href="/dashboard/ui-elements">
-                  <LayoutIcon 
-                    size={18} 
-                    className={pathname === '/dashboard/ui-elements' ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'} 
-                  />
-                </Link>
-              </div>
-              <div className="flex justify-center py-2.5">
-                <Link href="/dashboard/table">
-                  <Table 
-                    size={18} 
-                    className={pathname === '/dashboard/table' ? 'text-blue-500' : 'text-gray-800 hover:text-blue-500'} 
-                  />
-                </Link>
-              </div>
-              <div className="flex justify-center py-2.5">
                 <Link href="/dashboard/team">
                   <User2 
                     size={18} 
@@ -237,18 +186,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
           ) : (
             <>
               <NavItem
-                icon={<Calendar size={18} />}
-                label="Calendar"
-                href="/dashboard/calendar"
-                isActive={pathname === '/dashboard/calendar'}
-              />
-              <NavItem
-                icon={<CheckSquare size={18} />}
-                label="To-Do"
-                href="/dashboard/todo"
-                isActive={pathname === '/dashboard/todo'}
-              />
-              <NavItem
                 icon={<MessageSquare size={18} />}
                 label="Contact"
                 href="/dashboard/contact"
@@ -259,18 +196,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                 label="Invoice"
                 href="/dashboard/invoice"
                 isActive={pathname === '/dashboard/invoice'}
-              />
-              <NavItem
-                icon={<LayoutIcon size={18} />}
-                label="UI Elements"
-                href="/dashboard/ui-elements"
-                isActive={pathname === '/dashboard/ui-elements'}
-              />
-              <NavItem
-                icon={<Table size={18} />}
-                label="Table"
-                href="/dashboard/table"
-                isActive={pathname === '/dashboard/table'}
               />
               <NavItem
                 icon={<User2 size={18} />}
