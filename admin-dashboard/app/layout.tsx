@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConfigProvider } from "antd";
 import StyledComponentsRegistry from "../lib/AntdRegistry";
+import AuthProvider from "../lib/SessionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,17 +19,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <StyledComponentsRegistry>
-          <ConfigProvider
-            theme={{
-              token: {
-                colorPrimary: "#1677ff",
-              },
-            }}
-          >
-            {children}
-          </ConfigProvider>
-        </StyledComponentsRegistry>
+        <AuthProvider>
+          <StyledComponentsRegistry>
+            <ConfigProvider
+              theme={{
+                token: {
+                  colorPrimary: "#1677ff",
+                },
+              }}
+            >
+              {children}
+            </ConfigProvider>
+          </StyledComponentsRegistry>
+        </AuthProvider>
       </body>
     </html>
   );

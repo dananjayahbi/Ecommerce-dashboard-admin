@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Button } from 'antd';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
 import {
   BarChart3,
   Users,
@@ -18,6 +19,14 @@ const { Header, Sider, Content } = Layout;
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  // Handle logout
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/login');
+  };
 
   const navItems = [
     {
@@ -73,21 +82,30 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           items={navItems}
         />
         <div className="p-4 mt-auto">
-          <Link href="/auth/login">
-            <Button icon={<LogOut size={18} />} danger type="primary" block>
-              {collapsed ? '' : 'Logout'}
-            </Button>
-          </Link>
+          <Button 
+            icon={<LogOut size={18} />} 
+            danger 
+            type="primary" 
+            block
+            onClick={handleLogout}
+          >
+            {collapsed ? '' : 'Logout'}
+          </Button>
         </div>
       </Sider>
       <Layout style={{ marginLeft: collapsed ? 0 : 200, transition: 'margin-left 0.2s' }}>
-        <Header style={{ padding: 0, background: '#fff', display: 'flex', alignItems: 'center' }}>
+        <Header style={{ padding: 0, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Button
             type="text"
             icon={<MenuIcon />}
             onClick={() => setCollapsed(!collapsed)}
             style={{ fontSize: '16px', width: 64, height: 64 }}
           />
+          {session?.user && (
+            <div className="mr-4 flex items-center">
+              <span className="mr-4">Welcome, {session.user.name}</span>
+            </div>
+          )}
         </Header>
         <Content style={{ margin: '24px 16px', minHeight: 280 }}>
           {children}
