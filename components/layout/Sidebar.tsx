@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import {
   BarChart3,
   ShoppingBag,
   Settings,
-  LogOut,
   LayoutDashboard as LayoutDashboard,
   Inbox,
   FileText,
@@ -57,12 +56,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
-
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut({ redirect: false });
-    router.push("/auth/login");
-  };
 
   return (
     <div
@@ -271,13 +264,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                   />
                 </Link>
               </div>
-              <div className="flex justify-center py-2.5 cursor-pointer">
-                <LogOut
-                  size={18}
-                  className="text-gray-800 hover:text-blue-500"
-                  onClick={handleLogout}
-                />
-              </div>
             </>
           ) : (
             <>
@@ -286,12 +272,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false }) => {
                 label="Settings"
                 href="/dashboard/settings"
                 isActive={pathname === "/dashboard/settings"}
-              />
-              <NavItem
-                icon={<LogOut size={18} />}
-                label="Logout"
-                href="#"
-                onClick={handleLogout}
               />
             </>
           )}

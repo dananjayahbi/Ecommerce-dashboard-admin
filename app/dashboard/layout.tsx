@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layout, Button } from 'antd';
-import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Menu as MenuIcon } from 'lucide-react';
+import { Layout, Button, Dropdown } from 'antd';
+import { usePathname, useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
+import { Menu as MenuIcon, LogOut, User } from 'lucide-react';
 import Sidebar from '@/components/layout/Sidebar';
 
 const { Header, Content } = Layout;
@@ -13,6 +13,40 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const router = useRouter();
+
+  // Handle logout
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push("/auth/login");
+  };
+
+  const profileMenuItems = [
+    {
+      key: 'profile',
+      label: (
+        <div 
+          className="flex items-center px-4 py-2 text-sm hover:bg-gray-100" 
+          onClick={() => router.push('/dashboard/profile')}
+        >
+          <User size={16} className="mr-2" />
+          Profile
+        </div>
+      ),
+    },
+    {
+      key: 'logout',
+      label: (
+        <div 
+          className="flex items-center px-4 py-2 text-sm text-red-500 hover:bg-gray-100" 
+          onClick={handleLogout}
+        >
+          <LogOut size={16} className="mr-2" />
+          Logout
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -30,6 +64,20 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           {session?.user && (
             <div className="flex items-center">
               <span className="mr-4">Welcome, {session.user.name}</span>
+              <Dropdown 
+                menu={{ items: profileMenuItems }} 
+                placement="bottomRight" 
+                trigger={['click']}
+                arrow
+              >
+                <div className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border-2 border-blue-100 hover:border-blue-300 transition-all">
+                  <img 
+                    src={session.user.image || `https://ui-avatars.com/api/?name=${session.user.name || 'User'}&background=random`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </Dropdown>
             </div>
           )}
         </header>
