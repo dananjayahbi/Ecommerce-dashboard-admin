@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import '@ant-design/v5-patch-for-react-19';
 import { ConfigProvider } from "antd";
 import StyledComponentsRegistry from "../lib/AntdRegistry";
 import AuthProvider from "../lib/SessionProvider";

@@ -63,7 +63,7 @@ export const fetchTeamMember = async (id: string): Promise<TeamMember> => {
 };
 
 // Create a new team member
-export const createTeamMember = async (member: TeamMember & { password: string }): Promise<TeamMember> => {
+export const createTeamMember = async (member: TeamMember & { password?: string }): Promise<TeamMember> => {
   try {
     const apiMember = {
       ...uiToApiTeamMember(member),
