@@ -22,14 +22,14 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    // Check if user is authenticated and is admin
+    // Check if user is authenticated and has appropriate role
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins should access the team management
-    if (!session.user.isAdmin) {
+    // Only Admin and Super-Admin should access the team management
+    if (session.user.role !== 'Admin' && session.user.role !== 'Super-Admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
@@ -43,7 +43,7 @@ export async function GET(
         id: true,
         name: true,
         email: true,
-        isAdmin: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
         // Exclude password field
@@ -70,25 +70,55 @@ export async function PUT(
   { params }: RouteParams
 ) {
   try {
-    // Check if user is authenticated and is admin
+    // Check if user is authenticated and has appropriate role
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins should access the team management
-    if (!session.user.isAdmin) {
+    // Only Admin and Super-Admin should access the team management
+    if (session.user.role !== 'Admin' && session.user.role !== 'Super-Admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
     
     // Safely get the ID parameter
     const id = await getIdParam(params);
     
+    // Get the user to update
+    const userToUpdate = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!userToUpdate) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Permission checks for specific roles
+    if (id === session.user.id) {
+      return NextResponse.json(
+        { error: 'Cannot update your own account through this endpoint' },
+        { status: 403 }
+      );
+    }
+
+    if (session.user.role === 'Admin') {
+      // Admins can't update other Admins or Super-Admins
+      if (userToUpdate.role === 'Admin' || userToUpdate.role === 'Super-Admin') {
+        return NextResponse.json(
+          { error: 'Admin cannot update other Admins or Super-Admins' },
+          { status: 403 }
+        );
+      }
+    }
+    
     const body = await request.json();
-    const { name, email, isAdmin, password } = body;
+    const { name, email, role, password } = body;
 
     // Validation
-    if (!name && !email && isAdmin === undefined && !password) {
+    if (!name && !email && !role && !password) {
       return NextResponse.json(
         { error: 'At least one field must be provided for update' },
         { status: 400 }
@@ -113,10 +143,30 @@ export async function PUT(
     }
 
     // Prepare data for update
-    const updateData: { name?: string; email?: string; isAdmin?: boolean; password?: string } = {};
+    const updateData: any = {};
     if (name) updateData.name = name;
     if (email) updateData.email = email;
-    if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
+    
+    // Role update permissions
+    if (role) {
+      // Cannot change role to Super-Admin
+      if (role === 'Super-Admin' && userToUpdate.role !== 'Super-Admin') {
+        return NextResponse.json(
+          { error: 'Cannot change users to Super-Admin role' },
+          { status: 403 }
+        );
+      }
+
+      // Only Super-Admin can change a user to/from Admin role
+      if ((role === 'Admin' || userToUpdate.role === 'Admin') && session.user.role !== 'Super-Admin') {
+        return NextResponse.json(
+          { error: 'Only Super-Admin can assign or remove Admin role' },
+          { status: 403 }
+        );
+      }
+
+      updateData.role = role;
+    }
 
     // Handle password update if provided
     if (password) {
@@ -132,7 +182,7 @@ export async function PUT(
         id: true,
         name: true,
         email: true,
-        isAdmin: true,
+        role: true,
         createdAt: true,
         updatedAt: true,
         // Exclude password
@@ -155,26 +205,51 @@ export async function DELETE(
   { params }: RouteParams
 ) {
   try {
-    // Check if user is authenticated and is admin
+    // Check if user is authenticated and has appropriate role
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins should access the team management
-    if (!session.user.isAdmin) {
+    // Only Admin and Super-Admin should access the team management
+    if (session.user.role !== 'Admin' && session.user.role !== 'Super-Admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     // Safely get the ID parameter
     const id = await getIdParam(params);
+    
+    // Get the user to delete
+    const userToDelete = await prisma.user.findUnique({
+      where: { id }
+    });
 
-    // Prevent deleting yourself
-    if (session.user.id === id) {
+    if (!userToDelete) {
       return NextResponse.json(
-        { error: 'You cannot delete your own account' },
-        { status: 400 }
+        { error: 'User not found' },
+        { status: 404 }
       );
+    }
+
+    // Permission checks
+    // - Super-Admin can delete any user
+    // - Admin can only delete Members
+    // - Nobody can delete themselves
+    if (id === session.user.id) {
+      return NextResponse.json(
+        { error: 'Cannot delete your own account' },
+        { status: 403 }
+      );
+    }
+
+    if (session.user.role === 'Admin') {
+      // Admins can't delete other Admins or Super-Admins
+      if (userToDelete.role === 'Admin' || userToDelete.role === 'Super-Admin') {
+        return NextResponse.json(
+          { error: 'Admin cannot delete other Admins or Super-Admins' },
+          { status: 403 }
+        );
+      }
     }
 
     // Delete user
